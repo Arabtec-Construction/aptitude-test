@@ -674,9 +674,9 @@
         <p class="lead" data-i18n="lead"></p>
 
         <div class="facts">
-          <div class="fact"><b>25</b><span data-i18n="f1"></span></div>
-          <div class="fact"><b>20</b><span data-i18n="f2"></span></div>
-          <div class="fact"><b>1</b><span data-i18n="f3"></span></div>
+          <div class="fact"><b>30</b><span data-i18n="f1"></span></div>
+          <div class="fact"><b>25</b><span data-i18n="f2"></span></div>
+          <div class="fact"><b>3</b><span data-i18n="f3"></span></div>
         </div>
 
         <form id="startForm" class="card" novalidate>
@@ -709,7 +709,7 @@
           <label for="fPhone" data-i18n="lPhone"></label>
           <input id="fPhone" type="tel" autocomplete="tel" dir="ltr" />
           <label for="fRole" data-i18n="lRole"></label>
-          <input id="fRole" type="text" />
+          <input id="fRole" type="text" autocomplete="organization-title" required aria-required="true" />
           <input
             type="checkbox"
             name="botcheck"
@@ -757,7 +757,7 @@
             id="progWrap"
             role="progressbar"
             aria-valuemin="0"
-            aria-valuemax="25"
+            aria-valuemax="30"
             aria-valuenow="0"
             aria-label="Answered"
           >
@@ -861,7 +861,7 @@
         recipient: "arabtec.dev@gmail.com", // where results go: must be the email you generate the Web3Forms key for
         accessKey: "b09e3c80-172e-436a-9e00-474691f3b543",
         testTitle: "Reasoning & Aptitude Test",
-        minutes: 20,
+        minutes: 25,
         showScoreToCandidate: false, // keep false: candidate only sees "thank you"
         useHcaptcha: false, // see README note: also switch hCaptcha on in your Web3Forms dashboard
         sendAttempts: 3, // automatic tries before showing the backup code
@@ -871,7 +871,7 @@
       (() => {
         "use strict";
         const $ = (id) => document.getElementById(id);
-        const TOTAL = 25;
+        const TOTAL = 30;
 
         /* ============================== TEXT (EN / AR) ============================== */
         const I18N = {
@@ -881,8 +881,8 @@
             lead: "Part of the Arabtec recruitment process. Please complete it in one sitting.",
             f1: "Questions",
             f2: "Minutes",
-            f3: "Correct answer each",
-            r1: "Number series, patterns, verbal reasoning and logic",
+            f3: "Parts: reasoning, workplace situations, work style",
+            r1: "Part 1 (15 questions): number series, patterns, verbal reasoning and logic. Part 2 (6): workplace situations. Part 3 (9): work style. In Parts 2 and 3 there are no trick answers: choose what you would genuinely do",
             r2: "You may go back and change answers until you submit",
             r3: "No calculator, no internet, no help from others — work alone",
             r4: "The timer cannot be paused. The test submits itself at 0:00",
@@ -892,7 +892,8 @@
             lName: "Full name *",
             lEmail: "Email *",
             lPhone: "Phone / WhatsApp",
-            lRole: "Position applied for",
+            lRole: "Position applied for *",
+            errRole: "Please enter the position you are applying for.",
             consent:
               "I confirm I will complete this test on my own, and I agree that my details and answers are seen by the Arabtec recruiting team and sent through the Web3Forms email service, for hiring purposes only.",
             start: "Start the test",
@@ -1075,7 +1076,7 @@
           "Verbal reasoning": "الاستدلال اللفظي",
           Logic: "المنطق",
         };
-        const secName = (k) => (LANG === "ar" ? SECTION_AR[k] : k);
+        const secName = (k) => (LANG === "ar" && SECTION_AR[k]) || k;
 
         const SYM = ["▲", "■", "●", "◆", "★", "✚", "▼", "♥"];
         const rot = (set, lead) => {
@@ -1685,11 +1686,249 @@
           },
         ];
 
+
+
+        /* ===== Role profiles: how each position is read =====
+           need = what the role leans on; rmin = expected reasoning % for the role;
+           rw = weight (1-3) of each reasoning skill; sw = workplace-judgement areas that matter most;
+           tw = work-style traits the role leans on; q = interview questions to ask.
+           These are the test author's assumptions about each role: edit freely. */
+        const RK = ["Number series", "Patterns & letters", "Verbal reasoning", "Logic"];
+        const R = (label, need, rmin, rw, sw, tw, q) => ({ label, need, rmin, rw: { "Number series": rw[0], "Patterns & letters": rw[1], "Verbal reasoning": rw[2], Logic: rw[3] }, sw, tw, q });
+        const ROLES = {
+          site: R("Site / Execution Engineer", "practical problem solving, safety discipline, calm leadership of site teams", 55, [2, 2, 1, 3], ["PRO", "TEAM", "COMM", "CONF"], { S: "high", C: "high", A: "high" },
+            ["Describe a time you stopped unsafe work on site. What did you do and say?", "Tell me about a day when everything went wrong on site. How did you keep the team on track?", "How do you handle a foreman or subcontractor who disagrees with your instruction?"]),
+          tech: R("Technical Office / Design Engineer", "accuracy, careful checking, calculation, clear technical communication", 65, [3, 2, 2, 3], ["ACC", "COMM", "ADAPT"], { C: "high", O: "high" },
+            ["Describe a time you found an error in drawings or calculations. How did you handle it?", "How do you check your own work before it goes to someone else?", "How do you explain a technical issue to someone who is not technical?"]),
+          plan: R("Planning / Project Controls", "analysing numbers and sequences, reliable follow-through, clear reporting", 65, [3, 2, 1, 3], ["ACC", "COMM", "ADAPT"], { C: "high", S: "high" },
+            ["Tell me about a schedule that slipped. What did you do?", "How do you keep a plan updated when priorities change often?", "How do you present bad news about delays to a manager?"]),
+          qs: R("Quantity Surveyor / Cost & Contracts", "numeracy, attention to detail, integrity with money and contracts", 65, [3, 1, 2, 3], ["PRO", "ACC", "COMM"], { C: "high", A: "mod" },
+            ["Describe a time a cost or quantity did not add up. What did you do?", "Have you ever been offered something by a supplier or subcontractor? What did you do?", "How do you handle a disputed variation or claim?"]),
+          proc: R("Procurement / Supply Chain", "negotiation, communication, integrity, juggling suppliers and deadlines", 55, [2, 1, 3, 2], ["PRO", "CONF", "COMM"], { X: "high", C: "high", A: "mod" },
+            ["Tell me about a tough negotiation with a supplier. How did it end?", "How do you handle a supplier who is late or rude?", "How do you keep purchasing fair and transparent?"]),
+          fin: R("Finance & Accounting", "numeracy, accuracy, integrity, meeting deadlines", 65, [3, 1, 2, 3], ["PRO", "ACC", "COMM"], { C: "high", S: "high" },
+            ["Describe a time you found a mistake in accounts. What did you do?", "How do you manage month-end pressure and deadlines?", "What would you do if a manager asked you to bend a procedure?"]),
+          hr: R("HR / Admin / Document Control", "communication, discretion, empathy, organisation and follow-through", 50, [1, 1, 3, 2], ["COMM", "EMP", "ACC", "PRO"], { A: "high", C: "high" },
+            ["Tell me about a time you supported someone who was struggling at work.", "How do you keep records accurate and confidential?", "How do you handle conflicting requests from different managers?"]),
+          pm: R("Project / Construction Manager", "leading people, handling conflict, decision making, accountability", 60, [2, 1, 3, 3], ["CONF", "COMM", "TEAM", "ACC"], { S: "high", X: "high", C: "high" },
+            ["Tell me about a conflict between two people on your team. How did you resolve it?", "Describe a decision you made with incomplete information. What happened?", "How do you give hard feedback to someone senior to you or to a veteran?"]),
+          sup: R("Supervisor / Foreman / Technician", "following and enforcing procedures, safety, teamwork, steady under pressure", 40, [1, 2, 1, 2], ["PRO", "TEAM", "COMM"], { S: "high", A: "high", C: "high" },
+            ["What would you do if a worker refused to wear safety equipment?", "How do you pass on instructions so everyone understands?", "Tell me about a time you helped a new worker settle in."]),
+          other: R("Other / General", "balanced reasoning, communication and reliability", 50, [1, 1, 1, 1], ["COMM", "ACC", "TEAM"], { C: "high" },
+            ["Tell me about a time you had to learn something quickly.", "Describe a disagreement at work and how it ended.", "What would your last manager say about your reliability?"]),
+        };
+
+        /* Match the position the candidate typed to the closest role profile above. */
+        function detectRole(text) {
+          const x = (text || "").toLowerCase();
+          const rules = [
+            ["qs", /quantity|\bqs\b|\bcost\b|contract|estimat|billing|quantit/],
+            ["proc", /procure|purchas|buyer|supply|logistic|\bstore|warehouse|inventory/],
+            ["fin", /account|financ|audit|treasur|payroll|cashier|budget/],
+            ["hr", /\bhr\b|human resource|recruit|talent|admin|secretar|document control|receptionist|office manager|coordinator/],
+            ["plan", /planning|planner|schedul|project control|primavera|\bp6\b/],
+            ["pm", /project manager|construction manager|general manager|operations manager|site manager|manager|director|head of/],
+            ["tech", /technical office|design|draft|autocad|\bbim\b|structural|architect/],
+            ["sup", /foreman|supervisor|technician|operator|electrician|plumber|carpenter|mason|surveyor|driver|safety|\bhse\b|inspector|laborer|labourer|worker/],
+            ["site", /engineer|\bsite\b|execution|civil|mechanical|electrical|\bmep\b|\bqa\b|\bqc\b|quality/],
+          ];
+          for (const [k, re] of rules) if (re.test(x)) return k;
+          return "other";
+        }
+        function roleFit(m, key, typed) {
+          const role = ROLES[key] || ROLES.other,
+            L = [
+              key && ROLES[key] && key !== "other"
+                ? `ROLE PROFILE USED: ${role.label} (matched from the position typed: "${typed}")`
+                : `ROLE PROFILE USED: ${role.label} (no specific profile matched the position typed: "${typed}")`,
+              `This role leans on: ${role.need}.`,
+              "",
+            ];
+          const lvl = (v, min) => (v >= min + 10 ? 2 : v >= min ? 2 : v >= min - 15 ? 1 : 0);
+          // reasoning, weighted by what matters for the role
+          let sw = 0,
+            sp = 0;
+          const strong = [],
+            weak = [];
+          RK.forEach((k) => {
+            const v = m.sections[k];
+            if (!v) return;
+            const pc = Math.round((v.c / v.n) * 100),
+              w = role.rw[k];
+            sw += w;
+            sp += w * pc;
+            if (w >= 2 && pc >= role.rmin + 10) strong.push(`${k} (${pc}%)`);
+            if (w >= 2 && pc < role.rmin) weak.push(`${k} (${pc}%)`);
+          });
+          const rpc = Math.round(sp / Math.max(sw, 1)),
+            rl = lvl(rpc, role.rmin),
+            rtxt = rl === 2 ? (rpc >= role.rmin + 10 ? "above" : "meets") : rl === 1 ? "slightly below" : "below";
+          L.push(`REASONING FOR THIS ROLE: ${rpc}% weighted on what the role needs (the role usually wants about ${role.rmin}% or more): ${rtxt} expectation.`);
+          if (strong.length) L.push(`  Strong where it matters: ${strong.join(", ")}.`);
+          if (weak.length) L.push(`  Below expectation where it matters: ${weak.join(", ")}.`);
+          // workplace judgement on role-relevant areas
+          const dm = m.social.dims;
+          let rp = 0,
+            rm = 0;
+          const rel = [];
+          role.sw.forEach((d) => {
+            if (dm[d]) {
+              rp += dm[d].p;
+              rm += dm[d].m;
+              rel.push(`${DIM[d]} ${dm[d].p}/${dm[d].m}`);
+            }
+          });
+          if (!rm) {
+            rp = m.social.pts;
+            rm = m.social.max;
+          }
+          const spc = rm ? Math.round((rp / rm) * 100) : 0,
+            sl = spc >= 70 ? 2 : spc >= 50 ? 1 : 0;
+          L.push("", `WORKPLACE JUDGEMENT ON AREAS THAT MATTER FOR THIS ROLE: ${rp}/${rm} (${spc}%)${rel.length ? " - " + rel.join(", ") : " (none of this role's key areas came up, so all situations are counted)"}.`);
+          const miss = m.social.picks.filter((x) => x.chosen !== null && x.p === 0 && role.sw.includes(x.d));
+          miss.forEach((x) => L.push(`  Weak choice in ${DIM[x.q.d]}, which matters for this role: "${x.chosen}"`));
+          // work style vs role
+          const tl = [],
+            ok = [],
+            diff = [];
+          Object.entries(role.tw).forEach(([d, want]) => {
+            const T = m.pers.traits[d];
+            if (!T || !T.n) return;
+            const pc = Math.round(((T.sum - T.n) / (3 * T.n)) * 100),
+              lv = pc >= 65 ? "high" : pc >= 35 ? "moderate" : "low",
+              good = want === "high" ? pc >= 65 : pc >= 35 && pc < 85;
+            const part = want === "high" ? pc >= 35 : pc >= 20;
+            tl.push(good ? 2 : part ? 1 : 0);
+            (good ? ok : diff).push(`${TRAIT[d]} ${lv}${want === "high" ? " (role leans high)" : ""}`);
+          });
+          const tpc = tl.length ? tl.reduce((a, b) => a + b, 0) / (tl.length * 2) : 0.5,
+            tf = tpc >= 0.75 ? 2 : tpc >= 0.4 ? 1 : 0;
+          L.push("", "WORK STYLE VS THIS ROLE (self-reported):");
+          if (ok.length) L.push(`  Fits: ${ok.join("; ")}.`);
+          if (diff.length) L.push(`  Differs: ${diff.join("; ")}.`);
+          // overall
+          const score = rl * 2 + sl + tf,
+            fit =
+              sl === 0 && tf === 0
+                ? "WEAKER FIT ON THIS EVIDENCE (reasoning alone does not make up for the workplace and work-style gaps)"
+                : score >= 6
+                  ? "STRONG FIT"
+                  : score >= 4
+                    ? "POSSIBLE FIT (probe the gaps below)"
+                    : "WEAKER FIT ON THIS EVIDENCE";
+          L.push("", `INDICATIVE FIT: ${fit}  [reasoning ${rl}/2 (counts double), workplace judgement ${sl}/2, work style ${tf}/2]`);
+          L.push("", "QUESTIONS TO ASK AT INTERVIEW:");
+          role.q.forEach((x, i) => L.push(`  ${i + 1}. ${x}`));
+          L.push("", "NOTE: Role profiles and expected levels are assumptions made by the test author, not benchmarks from real job performance. Treat the fit read as a starting point for the interview, alongside the CV and references.");
+          return L.join("\n");
+        }
+        /* ===== Part 2: workplace situations (social / interpersonal judgement) =====
+           Each scenario: d = skill area, t = situation, b = best response (2 pts),
+           r = other responses with points (1 = acceptable, 0 = weak). Keys are the
+           author's judgement of good workplace practice, not a validated scale. */
+        const DIM = {
+          TEAM: "Teamwork",
+          COMM: "Communication",
+          CONF: "Handling conflict",
+          EMP: "Empathy & support",
+          ACC: "Accountability",
+          PRO: "Professional conduct",
+          ADAPT: "Feedback & change",
+        };
+        const SJ = [
+          { d: "TEAM", t: "A colleague on your team is clearly overloaded, while you have spare capacity this week. Your manager has not noticed. What do you do?",
+            b: "Offer to take specific tasks and tell your manager what you have agreed.",
+            r: [["Tell your manager that your colleague seems overloaded and that you have time, and leave it to them to decide.", 1], ["Carry on with your own tasks. Workload is the manager's job.", 0], ["Mention to other colleagues that this person is struggling to cope.", 0]] },
+          { d: "TEAM", t: "In a team meeting, a colleague presents an idea you think has a serious flaw, and the group seems ready to agree.",
+            b: "Ask a question to understand the idea, then explain your concern with a reason and suggest an alternative.",
+            r: [["Stay quiet in the meeting, then raise your concern with them privately once the meeting is over.", 1], ["Say plainly in front of everyone that it will not work, so the group does not waste time on it.", 0], ["Go along with it. The group has decided.", 0]] },
+          { d: "COMM", t: "You must explain a technical problem to a senior manager who has no technical background and very little time.",
+            b: "Lead with the conclusion and what you need from them, in plain words.",
+            r: [["Give the full technical explanation so that nothing is missed, and answer questions afterwards.", 1], ["Say it is too technical to explain briefly and ask someone else to brief them.", 0], ["Give a reassuring summary and leave out the risks so as not to worry them.", 0]] },
+          { d: "COMM", t: "A message you sent was unclear, and a colleague acted on the wrong information.",
+            b: "Tell them promptly, take responsibility for the unclear wording and agree how to fix it.",
+            r: [["Send the corrected information without mentioning the earlier mistake.", 1], ["Point out that they should have asked if they were unsure about anything in the message.", 0], ["Wait and see whether it causes a real problem before saying anything.", 0]] },
+          { d: "CONF", t: "Two colleagues are in a tense disagreement that is starting to delay a shared task.",
+            b: "Speak to each separately, then suggest they meet to agree a way forward and offer to help.",
+            r: [["Raise it with your manager, explain that it is delaying the task, and ask them to sort it out.", 1], ["Stay out of it. It is not your argument.", 0], ["Support the colleague you get on better with, to settle it quickly.", 0]] },
+          { d: "CONF", t: "A client is rude to you on the phone about a delay that was not your fault.",
+            b: "Stay calm, acknowledge their frustration, and say what you will do next and by when.",
+            r: [["Stay calm and explain that the delay is not your department, then give them the name of the right contact.", 1], ["Tell them you will not be spoken to like that and end the call.", 0], ["Agree that the company is at fault and promise a fix you are not sure you can deliver.", 0]] },
+          { d: "EMP", t: "A new team member seems quiet and unsure of themselves in their first weeks.",
+            b: "Check in with them regularly, show them how things work and introduce them to the right people.",
+            r: [["Tell them they can ask you if they need anything.", 1], ["Leave them to settle in without interference, because people learn fastest when left on their own.", 0], ["Give them the hardest tasks to see how quickly they cope.", 0]] },
+          { d: "EMP", t: "A colleague tells you they are under personal pressure and are struggling to meet their deadlines.",
+            b: "Listen without judging, ask what would help and point them to their manager or HR.",
+            r: [["Sympathise and quietly cover some of their work for a while, without telling anyone.", 1], ["Tell them everyone has problems and the work still has to be done.", 0], ["Tell the manager that this colleague is unreliable and cannot be counted on.", 0]] },
+          { d: "ACC", t: "You discover a mistake in a report you already sent to your manager. Nobody has noticed.",
+            b: "Tell your manager straight away, explain the error and send the corrected report.",
+            r: [["Quietly send a corrected version and hope it is seen as a normal update.", 1], ["Leave it unless someone points it out. It may not matter.", 0], ["Tell your manager the error probably came from the data you were given, not from you.", 0]] },
+          { d: "ACC", t: "You promised a colleague a piece of work by Thursday, but now you know you will not make it.",
+            b: "Tell them as soon as you know, explain why and agree a new time or other help.",
+            r: [["Work late and send whatever is finished on Thursday without comment.", 1], ["Wait until Thursday to see if you can still manage it, then apologise for the delay.", 0], ["Ask someone else to do it without telling your colleague.", 0]] },
+          { d: "PRO", t: "A supplier offers you a personal gift “as a thank you” while a contract decision involving them is still open.",
+            b: "Decline politely and tell your manager about the offer, as company policy requires.",
+            r: [["Decline politely but do not mention it to anyone.", 1], ["Accept it, but make sure it does not influence your decision on the contract in any way.", 0], ["Accept it and mention it to colleagues so that it is out in the open.", 0]] },
+          { d: "PRO", t: "You see a colleague ignoring a safety rule because they are in a hurry.",
+            b: "Stop them calmly and politely, remind them of the rule and report it if it continues.",
+            r: [["Mention it to the supervisor at the end of the day, when things are quieter and less rushed.", 1], ["Say nothing. They know the job better than you do.", 0], ["Take a photo and post it in the group chat so that they learn from it.", 0]] },
+          { d: "ADAPT", t: "Your manager gives you critical feedback on your work in front of your colleagues.",
+            b: "Stay calm, listen, ask for specific examples and follow up in private.",
+            r: [["Accept it politely in the meeting and decide later which points you think are fair.", 1], ["Defend yourself straight away and explain what others did wrong.", 0], ["Say nothing, then complain about it to colleagues afterwards.", 0]] },
+          { d: "ADAPT", t: "Priorities change at short notice and your planned work is put on hold for a new urgent task.",
+            b: "Clarify what matters most now, adjust your plan and tell anyone affected by the delay.",
+            r: [["Switch to the new task and carry on with the old one in any spare time.", 1], ["Finish your original plan first, then start the new task.", 0], ["Do the new task and say nothing to those waiting on the old work, hoping to catch up.", 0]] },
+        ];
+
+        /* ===== Part 3: work style (short self-report, 4-point agree scale) =====
+           t = statement, d = trait, k = +1 (agree = more of the trait) or -1 (reversed). */
+        const TRAIT = {
+          C: "Conscientiousness",
+          S: "Composure under pressure",
+          A: "Cooperation",
+          O: "Openness to learning",
+          X: "Outgoing / assertive",
+        };
+        const PERS = [
+          { d: "C", k: 1, t: "I double-check my work before I hand it in." },
+          { d: "C", k: 1, t: "I plan my tasks so that deadlines are met without last-minute rushing." },
+          { d: "C", k: -1, t: "I sometimes leave a task unfinished when something more interesting comes up." },
+          { d: "C", k: -1, t: "I find it hard to keep my files and workspace organised." },
+          { d: "S", k: 1, t: "I stay calm when things go wrong at work." },
+          { d: "S", k: 1, t: "I recover quickly after a setback or criticism." },
+          { d: "S", k: -1, t: "I get stressed easily when I have several urgent tasks at once." },
+          { d: "S", k: -1, t: "I keep worrying about mistakes long after they happen." },
+          { d: "A", k: 1, t: "I am happy to help colleagues even when it is not my job." },
+          { d: "A", k: 1, t: "I try to see a disagreement from the other person's side." },
+          { d: "A", k: -1, t: "I find it hard to compromise once I have made up my mind." },
+          { d: "A", k: -1, t: "I get impatient with people who work more slowly than I do." },
+          { d: "O", k: 1, t: "I enjoy learning new methods or tools, even when the old way works." },
+          { d: "O", k: 1, t: "I ask for feedback so that I can improve." },
+          { d: "O", k: -1, t: "I prefer to do things the way I have always done them." },
+          { d: "X", k: 1, t: "I am comfortable speaking up in a group of people I do not know well." },
+          { d: "X", k: 1, t: "I find it easy to start a conversation with someone new." },
+          { d: "X", k: -1, t: "I prefer to let others take the lead in meetings." },
+        ];
+        const SCALE = ["Strongly disagree", "Disagree", "Agree", "Strongly agree"];
         function buildQuestions(seed, lang) {
           LANG = lang;
           setSeed(seed);
           anPool = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-          return GEN.map((g, i) => {
+          /* Part 1: 15 of the 25 reasoning generators, kept in their original
+             (easy to hard) order within each skill. series 5/8, patterns 4/6, verbal 3/5, logic 3/6 */
+          const keep = new Set();
+          [
+            [0, 8, 5],
+            [8, 14, 4],
+            [14, 19, 3],
+            [19, 25, 3],
+          ].forEach(([a, b, n]) =>
+            shuffle(Array.from({ length: b - a }, (_, i) => a + i))
+              .slice(0, n)
+              .forEach((i) => keep.add(i)),
+          );
+          const base = GEN.map((g, i) => {
+            if (!keep.has(i)) return null;
             for (let tries = 0; tries < 30; tries++) {
               const q = g(),
                 all = [q.a, ...q.o];
@@ -1703,7 +1942,44 @@
                 anPool = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
             }
             throw new Error("question generation failed at slot " + (i + 1));
+          }).filter(Boolean);
+          /* Part 2: 6 workplace situations, from 6 different skill areas */
+          const dimsPick = shuffle(Object.keys(DIM)).slice(0, 6);
+          const sj = dimsPick.map((dm, k) => {
+            const x = pick(SJ.filter((y) => y.d === dm)),
+              all = [x.b, ...x.r.map((r) => r[0])],
+              w = { [x.b]: 2 };
+            x.r.forEach((r) => (w[r[0]] = r[1]));
+            return {
+              id: 100 + k,
+              s: "Workplace judgement",
+              d: x.d,
+              lead: x.t,
+              a: x.b,
+              o: x.r.map((r) => r[0]),
+              w,
+              opts: shuffle(all),
+            };
           });
+          /* Part 3: 9 work-style statements: composure/conscientiousness/cooperation/openness x2, outgoing x1;
+             one normal and one reverse-keyed statement per trait where possible */
+          const chosen = [];
+          [["C", 2], ["S", 2], ["A", 2], ["O", 2], ["X", 1]].forEach(([d, n]) => {
+            const pos = shuffle(PERS.filter((y) => y.d === d && y.k > 0)),
+              neg = shuffle(PERS.filter((y) => y.d === d && y.k < 0));
+            if (n === 2) chosen.push(pos[0], neg[0]);
+            else chosen.push(pick([pos[0], neg[0]]));
+          });
+          const pe = shuffle(chosen).map((x, k) => ({
+            id: 200 + k,
+            s: "Work style (no right or wrong answers)",
+            p: true,
+            d: x.d,
+            k: x.k,
+            lead: x.t,
+            opts: SCALE.slice(),
+          }));
+          return base.concat(sj, pe);
         }
         const plain = (q) =>
           (q.lead + (q.seq ? " " + q.seq : "")).replace(/\s*\n+\s*/g, " ");
@@ -1811,6 +2087,7 @@
           if (name.length < 3) return (err.textContent = t("errName"));
           if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
             return (err.textContent = t("errEmail"));
+          if ($("fRole").value.trim().length < 2) return (err.textContent = t("errRole"));
           if (!$("fConsent").checked)
             return (err.textContent = t("errConsent"));
           if (CONFIG.useHcaptcha) {
@@ -1833,6 +2110,7 @@
               email,
               phone: $("fPhone").value.trim(),
               role: $("fRole").value.trim(),
+              roleKey: detectRole($("fRole").value),
             },
             startedAt: Date.now(),
             answers: new Array(TOTAL).fill(null),
@@ -2019,28 +2297,259 @@
                 ? "Average"
                 : "Below average";
         function mark(questions, answers) {
-          let score = 0;
+          let score = 0,
+            nR = 0,
+            pts = 0,
+            max = 0;
           const sections = {},
-            detail = [];
+            detail = [],
+            oks = [],
+            dims = {},
+            picks = [],
+            traits = {};
+          let top = 0,
+            nP = 0;
           questions.forEach((q, i) => {
             const chosen =
               answers[i] === null || answers[i] === undefined
                 ? null
                 : q.opts[answers[i]];
+            if (q.p) {
+              const ix = answers[i],
+                got = ix == null ? null : q.k > 0 ? ix + 1 : 4 - ix;
+              nP++;
+              if (got === 4) top++;
+              if (got !== null) {
+                const T = (traits[q.d] = traits[q.d] || { sum: 0, n: 0 });
+                T.sum += got;
+                T.n++;
+              }
+              detail.push(
+                `Q${i + 1} [Work style | ${TRAIT[q.d]}${q.k < 0 ? ", reversed" : ""}] "${q.lead}"  answered: ${chosen === null ? "(blank)" : chosen}`,
+              );
+              return;
+            }
+            if (q.w) {
+              const p = chosen === null ? 0 : q.w[chosen] || 0;
+              pts += p;
+              max += 2;
+              const D = (dims[q.d] = dims[q.d] || { p: 0, m: 0 });
+              D.p += p;
+              D.m += 2;
+              picks.push({ i, q, chosen, p });
+              detail.push(
+                `Q${i + 1} [Workplace judgement | ${DIM[q.d]}] ${chosen === null ? "blank" : p + "/2"}  "${plain(q)}"  chose: ${chosen === null ? "(blank)" : chosen}  | best: ${q.a}`,
+              );
+              return;
+            }
+            nR++;
             const ok = chosen === q.a;
+            oks.push(ok);
             if (ok) score++;
             (sections[q.s] = sections[q.s] || { c: 0, n: 0 }).n++;
             if (ok) sections[q.s].c++;
             detail.push(
-              `Q${i + 1} [${q.s}] ${ok ? "✔" : "✘"}  "${plain(q)}"  answered: ${chosen === null ? "(blank)" : chosen}  | correct: ${q.a}`,
+              `Q${i + 1} [${q.s}] ${ok ? "\u2714" : "\u2718"}  "${plain(q)}"  answered: ${chosen === null ? "(blank)" : chosen}  | correct: ${q.a}`,
             );
           });
-          return { score, sections, detail };
+          return {
+            score,
+            nR,
+            sections,
+            detail,
+            oks,
+            social: { pts, max, dims, picks },
+            pers: { traits, top, nP },
+          };
         }
 
+        const sBand = (p) =>
+          p >= 80
+            ? "Strong"
+            : p >= 60
+              ? "Solid"
+              : p >= 40
+                ? "Mixed"
+                : "Needs probing";
+        /* Read-out of Part 2. Indicative only: scenario keys are the author's judgement. */
+        function analyseSocial(m, answers, nR) {
+          const S = m.social,
+            L = [];
+          if (!S.max) return "(no workplace-situation questions)";
+          const blank = answers.slice(nR, nR + S.max / 2).filter((a) => a == null).length,
+            pct = Math.round((S.pts / S.max) * 100);
+          L.push(
+            `OVERALL: ${S.pts}/${S.max} (${pct}%), "${sBand(pct)}". ${blank} left blank.`,
+            "",
+            "BY SKILL AREA (2 points per situation):",
+          );
+          const rows = Object.entries(S.dims).map(([k, v]) => ({
+            k: DIM[k],
+            raw: k,
+            p: v.p,
+            m: v.m,
+            pc: Math.round((v.p / v.m) * 100),
+          }));
+          rows.forEach((r) => L.push(`- ${r.k}: ${r.p}/${r.m} (${r.pc}%)`));
+          const worst = rows.reduce((a, b) => (b.pc < a.pc ? b : a)),
+            best = rows.reduce((a, b) => (b.pc > a.pc ? b : a));
+          if (best.pc !== worst.pc)
+            L.push(
+              "",
+              `STRONGEST: ${best.k} (${best.pc}%).  WEAKEST: ${worst.k} (${worst.pc}%).`,
+            );
+          const weak = S.picks.filter((x) => x.chosen !== null && x.p === 0);
+          L.push("", "RESPONSES WORTH DISCUSSING AT INTERVIEW:");
+          if (!weak.length) L.push("- None: no situation was answered with a weak option.");
+          weak.forEach((x) =>
+            L.push(
+              `- [${DIM[x.q.d]}] ${x.q.lead.slice(0, 90)}${x.q.lead.length > 90 ? "\u2026" : ""}\n  Chose: "${x.chosen}"` +
+                (x.q.d === "PRO" ? "\n  (Conduct / safety related: worth a direct conversation.)" : ""),
+            ),
+          );
+          const ideas = {
+            TEAM: "ask for an example of a time they supported or disagreed with a team decision",
+            COMM: "ask how they explain a complex point to someone with little time",
+            CONF: "ask about a disagreement at work and how it was resolved",
+            EMP: "ask how they support a struggling or new colleague",
+            ACC: "ask about a mistake or missed deadline and what they did",
+            PRO: "ask how they handle a conflict of interest or a safety concern",
+            ADAPT: "ask about critical feedback they received and what they changed",
+          };
+          if (worst.pc < 60)
+            L.push("", `INTERVIEW IDEA (${worst.k}): ${ideas[worst.raw]}.`);
+          L.push(
+            "",
+            "NOTE: Scored against the test author's view of good practice, not a validated scale. Candidates can pick the answer they think is expected, so use this to guide interview questions rather than as a decision on its own.",
+          );
+          return L.join("\n");
+        }
+
+
+        /* Read-out of Part 3. A short self-report, so it is a conversation starter only. */
+        function analysePersonality(m) {
+          const P = m.pers,
+            L = [];
+          if (!P.nP) return "(no work-style questions)";
+          L.push("WORK STYLE (self-reported, 4-point agree scale):", "");
+          const info = {
+            C: ["organised, careful and dependable about deadlines", "may be less structured; ask how they manage deadlines and detail"],
+            S: ["calm and steady under pressure", "may find pressure draining; ask how they cope in stressful periods"],
+            A: ["cooperative and supportive of colleagues", "may be direct or firm-minded; ask about teamwork and compromise"],
+            O: ["keen to learn and open to new methods", "may prefer familiar routines; ask how they handle change"],
+            X: ["outgoing and comfortable speaking up", "may be reserved; ask whether they are comfortable being visible in the role"],
+          };
+          const lines = [],
+            talk = [];
+          Object.keys(TRAIT).forEach((d) => {
+            const T = P.traits[d];
+            if (!T || !T.n) return;
+            const pc = Math.round(((T.sum - T.n) / (3 * T.n)) * 100),
+              lv = pc >= 65 ? "high" : pc >= 35 ? "moderate" : "low";
+            lines.push(`- ${TRAIT[d]}: ${lv} (${pc}/100, from ${T.n} statement${T.n > 1 ? "s" : ""})`);
+            if (lv === "high") talk.push(`  ${TRAIT[d]}: ${info[d][0]}.`);
+            if (lv === "low") talk.push(`  ${TRAIT[d]}: ${info[d][1]}.`);
+          });
+          L.push(...lines);
+          if (talk.length) L.push("", "WHAT THIS MAY MEAN (to check at interview):", ...talk);
+          if (P.top >= P.nP - 1 && P.nP >= 6)
+            L.push("", `RESPONSE STYLE: ${P.top} of ${P.nP} answers were at the most favourable extreme. This can mean a confident, positive candidate, or someone presenting an ideal image. Worth checking with examples.`);
+          L.push(
+            "",
+            "NOTE: Each trait rests on only 1-2 statements, so these are rough impressions, not a personality assessment. No profile is good or bad in itself: fit depends on the role. Use to prepare interview questions, never to reject on its own.",
+          );
+          return L.join("\n");
+        }
+        /* Plain-language read-out of the result, written into the email. Rule-based and
+           indicative only: the test is not a validated psychometric instrument. */
+        function analyse(m, secs, timedOut, flags, answers) {
+          const n = m.oks.length,
+            pct = Math.round((m.score / n) * 100),
+            blank = answers.slice(0, n).filter((a) => a === null || a === undefined).length,
+            attempted = n - blank,
+            wrong = attempted - m.score,
+            lvl = (p) =>
+              p >= 85 ? "strong" : p >= 65 ? "good" : p >= 40 ? "moderate" : "weak",
+            L = [];
+          L.push(
+            `OVERALL: ${m.score}/${n} (${pct}%), band "${band(pct)}". ${attempted} answered, ${blank} left blank, ${wrong} wrong.`,
+          );
+          const rows = Object.entries(m.sections).map(([k, v]) => ({
+            k,
+            c: v.c,
+            n: v.n,
+            p: Math.round((v.c / v.n) * 100),
+          }));
+          L.push("", "BY SKILL AREA:");
+          rows.forEach((r) => L.push(`- ${r.k}: ${r.c}/${r.n} (${r.p}%) - ${lvl(r.p)}`));
+          const best = rows.reduce((x, y) => (y.p > x.p ? y : x)),
+            worst = rows.reduce((x, y) => (y.p < x.p ? y : x));
+          if (best.p !== worst.p)
+            L.push(
+              "",
+              `STRONGEST: ${best.k} (${best.p}%).  WEAKEST: ${worst.k} (${worst.p}%).`,
+            );
+          else L.push("", "Performance was even across all skill areas.");
+          // pace and endurance
+          const mins = secs / 60,
+            half = Math.ceil(n / 2),
+            c1 = m.oks.slice(0, half).filter(Boolean).length,
+            c2 = m.oks.slice(half).filter(Boolean).length,
+            p1 = Math.round((c1 / half) * 100),
+            p2 = Math.round((c2 / (n - half)) * 100);
+          L.push("", "PACE AND APPROACH:");
+          L.push(
+            `- Used ${Math.floor(mins)}m ${String(secs % 60).padStart(2, "0")}s of ${CONFIG.minutes}m (${Math.round((secs / (CONFIG.minutes * 60)) * 100)}%), about ${Math.round(secs / Math.max(attempted, 1))}s per answered question.`,
+          );
+          if (timedOut && blank > 0)
+            L.push(
+              `- Time ran out with ${blank} question(s) unanswered: possible pacing problem, or a hard stop on difficult items.`,
+            );
+          else if (timedOut) L.push("- Time ran out, but every question had an answer.");
+          else if (blank > 0)
+            L.push(`- Submitted early and chose to leave ${blank} question(s) blank.`);
+          else L.push("- Finished with time to spare and answered everything.");
+          L.push(
+            `- First half ${p1}% vs second half ${p2}%` +
+              (p1 - p2 >= 25
+                ? ": clear drop-off late in the test (fatigue or time pressure)."
+                : p2 - p1 >= 25
+                  ? ": stronger in the second half (slow start, then settled)."
+                  : ": steady throughout."),
+          );
+          if (attempted > 0 && wrong / attempted >= 0.5 && blank === 0 && secs < 300)
+            L.push("- Fast and mostly wrong: may have rushed or guessed.");
+          // integrity
+          L.push("", "INTEGRITY SIGNALS:");
+          if (flags.length)
+            L.push(`- Flags: ${flags.join("; ")}.`, "- Flags are prompts for a conversation, not proof of anything.");
+          else L.push("- No flags raised.");
+          // suggestion
+          const sug =
+            pct >= 65 && !flags.length
+              ? "Reasoning level looks solid. Reasonable to move forward on this evidence."
+              : pct >= 65
+                ? "Strong score, but check the flags above, e.g. re-test briefly in person."
+                : pct >= 40
+                  ? "Mid-range. Use the interview to probe the weakest area below and weigh the role's reasoning demands."
+                  : "Below the typical range for this test. Weigh against the role before deciding.";
+          L.push("", `INDICATIVE SUGGESTION: ${sug}`);
+          const probe = {
+            "Number series": "ask them to explain how they spot a pattern in a sequence of figures",
+            "Patterns & letters": "give a short pattern or sequencing puzzle and ask them to think aloud",
+            "Verbal reasoning": "discuss a short written scenario and ask for conclusions and reasons",
+            Logic: "walk through a simple logic or percentage/ratio problem step by step",
+          }[worst.k];
+          if (probe && worst.p < 65) L.push(`INTERVIEW IDEA (${worst.k}): ${probe}.`);
+          L.push(
+            "",
+            "NOTE: This is a short, unsupervised, unvalidated test. Use it as one input alongside the CV and interview, never as the only basis for a decision.",
+          );
+          return L.join("\n");
+        }
         function buildPayload(timedOut) {
           const m = mark(qs, st.answers),
-            pct = Math.round((m.score / qs.length) * 100),
+            pct = Math.round((m.score / m.nR) * 100),
             now = Date.now();
           const secs = timedOut
             ? CONFIG.minutes * 60
@@ -2060,9 +2569,15 @@
             email: st.person.email,
             phone: st.person.phone || "-",
             position: st.person.role || "-",
+            role_fit: roleFit(m, st.person.roleKey, st.person.role || "-"),
             language: st.lang === "ar" ? "Arabic" : "English",
-            score: `${m.score}/${qs.length} (${pct}%)`,
+            score: `${m.score}/${m.nR} (${pct}%)`,
             aptitude_band: band(pct),
+            analysis: analyse(m, secs, timedOut, flags, st.answers),
+            social_score: `${m.social.pts}/${m.social.max} (${Math.round((m.social.pts / Math.max(m.social.max, 1)) * 100)}%)`,
+            social_band: sBand(Math.round((m.social.pts / Math.max(m.social.max, 1)) * 100)),
+            social_analysis: analyseSocial(m, st.answers, m.nR),
+            work_style: analysePersonality(m),
             sections: Object.entries(m.sections)
               .map(([k, v]) => `${k}: ${v.c}/${v.n}`)
               .join(" | "),
@@ -2247,7 +2762,7 @@
             tbl = document.createElement("table");
           const head = document.createElement("div");
           head.style.cssText = "margin-top:24px;font-size:18px;font-weight:700";
-          head.textContent = `Re-scored: ${m.score}/${Q.length} (${Math.round((m.score / Q.length) * 100)}%)`;
+          head.textContent = `Re-scored: ${m.score}/${m.nR} (${Math.round((m.score / m.nR) * 100)}%)  |  Workplace situations: ${m.social.pts}/${m.social.max}`;
           out.appendChild(head);
           const claim = $("rsClaim").value.trim();
           if (claim) {
@@ -2272,14 +2787,17 @@
           tbl.appendChild(hr);
           Q.forEach((q, i) => {
             const ch = o.a[i] == null ? null : q.opts[o.a[i]],
-              ok = ch === q.a,
+              pt = q.p
+                ? o.a[i] == null ? 0 : q.k > 0 ? o.a[i] + 1 : 4 - o.a[i]
+                : q.w ? (ch === null ? 0 : q.w[ch] || 0) : null,
+              ok = q.p ? pt >= 3 : q.w ? pt === 2 : ch === q.a,
               tr = document.createElement("tr");
             [
               String(i + 1),
               plain(q),
               ch === null ? "(blank)" : ch,
-              q.a,
-              ok ? "✔" : "✘",
+              q.p ? "(self-report)" : q.a,
+              q.p ? pt + "/4" : q.w ? pt + "/2" : ok ? "✔" : "✘",
             ].forEach((v, j) => {
               const td = document.createElement("td");
               td.textContent = v;
